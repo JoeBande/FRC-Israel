@@ -60,8 +60,8 @@ app.get('/', async (req, res) => {
                         <th style="padding: 12px;">מאזן (W-L-T)</th>
                     </tr>
                     ${allRankings.map(r => `
-                        <tr style="${r.team === '5987' ? 'background-color: #fff9c4; font-weight: bold;' : ''}">
-                            <td style="padding: 10px;">${r.team === '5987' ? '⭐ ' + r.team : r.team}</td>
+                        <tr style="border-bottom: 1px solid #eee;">
+                            <td style="padding: 10px;">${r.team}</td>
                             <td>${r.name}</td>
                             <td>${r.division}</td>
                             <td style="font-weight: bold; color: ${r.rank <= 8 ? 'green' : 'black'};">${r.rank}</td>
@@ -70,7 +70,7 @@ app.get('/', async (req, res) => {
                         </tr>
                     `).join('')}
                 </table>
-                <p style="text-align: center; margin-top: 20px; color: #666;">רענן את העמוד לעדכון הנתונים | בהצלחה לגלקסיה!</p>
+                <p style="text-align: center; margin-top: 20px; color: #666;">רענן את העמוד לעדכון הנתונים | !</p>
             </dir>
         `);
     } catch (e) { res.status(500).send("שגיאה: " + e.message); }
