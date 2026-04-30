@@ -49,7 +49,7 @@ app.get('/', async (req, res) => {
 
         res.send(`
             <dir dir="rtl" style="font-family: sans-serif; padding: 20px; background-color: #f4f4f9;">
-                <h2 style="text-align: center; color: #003366;">🇮🇱 ישראליות ביוסטון 2026 - טבלת דירוג</h2>
+                <h2 style="text-align: center; color: #003366;"> לוח תוצאות - קבוצות ישראל | Houston 2026</h2>
                 <table border="1" style="width: 100%; border-collapse: collapse; background: white; text-align: center; border: 2px solid #003366;">
                     <tr style="background-color: #003366; color: white;">
                         <th style="padding: 12px;">קבוצה</th>
