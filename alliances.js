@@ -33,36 +33,33 @@ app.get('/', async (req, res) => {
                 const divName = DIVISIONS[index].replace('2026', '').toUpperCase();
 
                 alliances.forEach((alliance, allianceIdx) => {
-                    const allianceName = `Alliance ${allianceIdx + 1}`;
+                    const allianceNum = allianceIdx + 1;
                     const israeliInAlliance = alliance.picks.filter(teamKey => ISRAELI_TEAMS.includes(teamKey));
                     
                     if (israeliInAlliance.length > 0) {
-                        // חישוב תוצאות פלייאוף לברית
-                        const allianceMatches = matches.filter(m => 
-                            m.alliances.red.team_keys.includes(alliance.picks[0]) || 
-                            m.alliances.blue.team_keys.includes(alliance.picks[0])
-                        );
+                        const firstTeam = alliance.picks[0];
+                        
+                        // סינון משחקים שהסתיימו עבור הברית הזו
+                        const allianceMatches = matches
+                            .filter(m => m.alliances.red.team_keys.includes(firstTeam) || m.alliances.blue.team_keys.includes(firstTeam))
+                            .filter(m => m.winning_alliance !== ""); // רק משחקים עם תוצאה
 
-                        let wins = 0;
-                        let losses = 0;
-                        allianceMatches.forEach(m => {
-                            if (m.winning_alliance) {
-                                const isRed = m.alliances.red.team_keys.includes(alliance.picks[0]);
-                                if ((isRed && m.winning_alliance === 'red') || (!isRed && m.winning_alliance === 'blue')) {
-                                    wins++;
-                                } else {
-                                    losses++;
-                                }
-                            }
+                        let matchResults = allianceMatches.map(m => {
+                            const isRed = m.alliances.red.team_keys.includes(firstTeam);
+                            const myScore = isRed ? m.alliances.red.score : m.alliances.blue.score;
+                            const oppScore = isRed ? m.alliances.blue.score : m.alliances.red.score;
+                            const resultEmoji = (isRed && m.winning_alliance === 'red') || (!isRed && m.winning_alliance === 'blue') ? '✅' : '❌';
+                            
+                            return `${resultEmoji} ${myScore}:${oppScore}`;
                         });
 
                         playoffAlliances.push({
                             division: divName,
-                            allianceNum: allianceIdx + 1,
-                            picks: alliance.picks.map(key => key.replace('frc', '')),
+                            allianceNum: allianceNum,
                             israeliTeams: israeliInAlliance.map(key => TEAM_NAMES[key.replace('frc', '')] || key.replace('frc', '')),
-                            record: `${wins} ניצחונות - ${losses} הפסדים`,
-                            status: alliance.status ? alliance.status.level : "בתחרות"
+                            record: `${matchResults.filter(r => r.includes('✅')).length} נצ' - ${matchResults.filter(r => r.includes('❌')).length} הפס'`,
+                            results: matchResults,
+                            status: alliance.status ? alliance.status.level : "פעילה"
                         });
                     }
                 });
@@ -70,25 +67,28 @@ app.get('/', async (req, res) => {
         });
 
         res.send(`
-            <dir dir="rtl" style="font-family: sans-serif; padding: 20px; background-color: #f0f2f5;">
-                <h1 style="text-align: center; color: #d35400;">מעקב פלייאוף בזמן אמת - ישראליות ביוסטון</h1>
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px;">
+            <dir dir="rtl" style="font-family: sans-serif; padding: 20px; background-color: #f4f4f9;">
+                <h1 style="text-align: center; color: #2c3e50;">תוצאות פלייאוף - נציגות ישראל</h1>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 15px;">
                     ${playoffAlliances.map(a => `
-                        <div style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.15); border-right: 8px solid #d35400;">
-                            <h2 style="margin: 0 0 10px 0; color: #2c3e50;">${a.division} - ברית ${a.allianceNum}</h2>
-                            <p style="font-size: 1.1em;"><strong>הקבוצות שלנו:</strong> <span style="color: #c0392b;">${a.israeliTeams.join(', ')}</span></p>
-                            <div style="background: #e8f4fd; padding: 10px; border-radius: 6px; margin: 15px 0; text-align: center; font-size: 1.2em; font-weight: bold; color: #2980b9;">
-                                מאזן פלייאוף: ${a.record}
+                        <div style="background: white; padding: 15px; border-radius: 12px; border-top: 6px solid #2980b9; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                            <h2 style="margin: 0;">${a.division} - ברית ${a.allianceNum}</h2>
+                            <p style="color: #c0392b; font-weight: bold;">${a.israeliTeams.join(', ')}</p>
+                            <div style="background: #2c3e50; color: white; padding: 8px; border-radius: 5px; text-align: center; margin: 10px 0;">
+                                מאזן: ${a.record}
                             </div>
-                            <p style="margin-bottom: 5px;"><strong>הרכב ברית:</strong> ${a.picks.join(' | ')}</p>
-                            <div style="font-size: 0.9em; color: #7f8c8d; text-align: left;">Status: ${a.status}</div>
+                            <p style="margin: 5px 0;"><strong>תוצאות משחקים:</strong></p>
+                            <ul style="list-style: none; padding: 0; margin: 0;">
+                                ${a.results.length > 0 ? a.results.map(r => `<li style="padding: 3px 0; font-family: monospace; font-size: 1.2em;">${r}</li>`).join('') : '<li>טרם שוחקו משחקים</li>'}
+                            </ul>
+                            <div style="margin-top: 10px; font-size: 0.8em; color: #95a5a6;">סטטוס: ${a.status}</div>
                         </div>
                     `).join('')}
                 </div>
-                <p style="text-align: center; margin-top: 30px;"><button onclick="location.reload()" style="padding: 10px 20px; font-size: 1em; cursor: pointer; background: #d35400; color: white; border: none; border-radius: 5px;">רענן תוצאות</button></p>
+                <p style="text-align: center; margin-top: 20px;"><button onclick="location.reload()" style="padding: 10px 20px; background: #2980b9; color: white; border: none; border-radius: 5px; cursor: pointer;">רענן תוצאות</button></p>
             </dir>
         `);
-    } catch (e) { res.status(500).send("שגיאה בעדכון התוצאות"); }
+    } catch (e) { res.status(500).send("שגיאה בטעינת התוצאות"); }
 });
 
-app.listen(port, () => console.log(`Playoff server running`));
+app.listen(port, () => console.log(`Playoff results server running`));
